@@ -261,6 +261,14 @@ function isCloudActive() {
   return Boolean(supabaseClient && state.currentUser);
 }
 
+function mergeBookings(...groups) {
+  const byId = new Map();
+  groups.flat().forEach((booking) => {
+    if (booking?.id) byId.set(booking.id, booking);
+  });
+  return Array.from(byId.values()).sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
+}
+
 async function loadCloudBookings() {
   if (!isCloudActive()) return;
   state.syncStatus = "Chargement cloud...";
@@ -279,6 +287,34 @@ async function loadCloudBookings() {
   }
 
   const localBookings = loadBookings();
+  let cloudBookings = (data || []).map(rowToBooking);
+  const cloudIds = new Set(cloudBookings.map((booking) => booking.id));
+  const localOnly = localBookings.filter((booking) => booking.id && !cloudIds.has(booking.id));
+
+  if (localOnly.length > 0) {
+    const rows = localOnly.map(bookingToRow);
+    const { data: importedRows, error: importError } = await supabaseClient
+      .from("bookings")
+      .upsert(rows, { onConflict: "id" })
+      .select("*");
+
+    if (importError) {
+      state.bookings = mergeBookings(cloudBookings, localOnly);
+      saveBookings();
+      state.syncStatus = `${localOnly.length} réservation(s) locale(s) non synchronisée(s)`;
+      alert(`Supabase refuse l'envoi des réservations : ${importError.message}`);
+      render();
+      return;
+    }
+
+    cloudBookings = mergeBookings(cloudBookings, (importedRows || []).map(rowToBooking));
+    state.bookings = cloudBookings;
+    saveBookings();
+    state.syncStatus = `${localOnly.length} réservation(s) envoyée(s) dans le cloud`;
+    render();
+    return;
+  }
+
   if ((!data || data.length === 0) && localBookings.length > 0) {
     const shouldImport = confirm("Le cloud est vide. Importer les réservations locales dans Supabase ?");
     if (shouldImport) {
