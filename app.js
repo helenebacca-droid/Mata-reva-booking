@@ -261,6 +261,15 @@ function isCloudActive() {
   return Boolean(supabaseClient && state.currentUser);
 }
 
+function isUuid(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ""));
+}
+
+function ensureUuidBooking(booking) {
+  if (isUuid(booking.id)) return booking;
+  return { ...booking, id: uid() };
+}
+
 function mergeBookings(...groups) {
   const byId = new Map();
   groups.flat().forEach((booking) => {
@@ -289,7 +298,7 @@ async function loadCloudBookings() {
   const localBookings = loadBookings();
   let cloudBookings = (data || []).map(rowToBooking);
   const cloudIds = new Set(cloudBookings.map((booking) => booking.id));
-  const localOnly = localBookings.filter((booking) => booking.id && !cloudIds.has(booking.id));
+  const localOnly = localBookings.filter((booking) => booking.id && !cloudIds.has(booking.id)).map(ensureUuidBooking);
 
   if (localOnly.length > 0) {
     const rows = localOnly.map(bookingToRow);
@@ -344,6 +353,7 @@ async function loadCloudBookings() {
 }
 
 async function saveBookingRecord(booking) {
+  booking.id = ensureUuidBooking(booking).id;
   if (!isCloudActive()) {
     saveBookings();
     return { ok: true };
@@ -399,8 +409,15 @@ function savePrices() {
 }
 
 function uid() {
-  if (crypto?.randomUUID) return crypto.randomUUID();
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+  const bytes = new Uint8Array(16);
+  globalThis.crypto?.getRandomValues(bytes);
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  return [...bytes].map((byte, index) => {
+    const value = byte.toString(16).padStart(2, "0");
+    return [4, 6, 8, 10].includes(index) ? `-${value}` : value;
+  }).join("");
 }
 
 function pad(value) {
