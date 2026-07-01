@@ -273,6 +273,7 @@ async function loadCloudBookings() {
 
   if (error) {
     state.syncStatus = `Erreur cloud : ${error.message}`;
+    alert(`Erreur cloud Supabase : ${error.message}`);
     render();
     return;
   }
@@ -282,14 +283,19 @@ async function loadCloudBookings() {
     const shouldImport = confirm("Le cloud est vide. Importer les réservations locales dans Supabase ?");
     if (shouldImport) {
       const rows = localBookings.map(bookingToRow);
-      const { error: importError } = await supabaseClient.from("bookings").upsert(rows, { onConflict: "id" });
+      const { data: importedRows, error: importError } = await supabaseClient
+        .from("bookings")
+        .upsert(rows, { onConflict: "id" })
+        .select("*");
       if (importError) {
         state.syncStatus = `Erreur import cloud : ${importError.message}`;
+        alert(`Import impossible dans Supabase : ${importError.message}`);
         render();
         return;
       }
-      state.bookings = localBookings;
-      state.syncStatus = "Réservations locales importées dans le cloud";
+      state.bookings = (importedRows || []).map(rowToBooking);
+      saveBookings();
+      state.syncStatus = `${state.bookings.length} réservation(s) importée(s) dans le cloud`;
       render();
       return;
     }
@@ -309,11 +315,14 @@ async function saveBookingRecord(booking) {
 
   const { error } = await supabaseClient
     .from("bookings")
-    .upsert(bookingToRow(booking), { onConflict: "id" });
+    .upsert(bookingToRow(booking), { onConflict: "id" })
+    .select("id")
+    .single();
 
   if (error) {
     state.syncStatus = `Erreur sauvegarde cloud : ${error.message}`;
     saveBookings();
+    alert(`La réservation est gardée en local, mais Supabase a refusé l'enregistrement : ${error.message}`);
     render();
     return { ok: false, error };
   }
