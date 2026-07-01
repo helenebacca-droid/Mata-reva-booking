@@ -118,9 +118,9 @@ a {
 
 .quick-stats {
   display: none;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
-  min-width: 460px;
+  min-width: 350px;
 }
 
 .stat-pill {
@@ -137,12 +137,32 @@ button.stat-pill {
 
 .cloud-status {
   min-height: 40px;
-  border: 1px solid rgba(255, 255, 255, 0.34);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.38);
   border-radius: 8px;
   padding: 0 12px;
-  background: rgba(6, 17, 29, 0.58);
   color: #ffffff;
   font-weight: 900;
+  white-space: nowrap;
+}
+
+.cloud-status.connected {
+  background: rgba(20, 116, 93, 0.92);
+}
+
+.cloud-status.disconnected {
+  background: rgba(217, 83, 50, 0.95);
+}
+
+.cloud-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.18);
 }
 
 .stat-value {

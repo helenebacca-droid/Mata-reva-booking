@@ -562,6 +562,8 @@ function renderTopbar() {
     const total = calculateTotal(booking);
     return total === null || booking.status === "cancelled" ? sum : sum + Math.max(0, total - Number(booking.paid || 0));
   }, 0);
+  const cloudState = supabaseClient && state.currentUser ? "connected" : "disconnected";
+  const cloudLabel = cloudState === "connected" ? "Cloud connecté" : "Cloud déconnecté";
 
   return `
     <header class="topbar">
@@ -572,12 +574,14 @@ function renderTopbar() {
           <p class="brand-subtitle">${COMPANY.departure}</p>
         </div>
       </div>
-      ${state.currentUser ? `<button class="cloud-status" data-signout>Cloud</button>` : ""}
+      <button class="cloud-status ${cloudState}" data-cloud-toggle title="${cloudLabel}">
+        <span class="cloud-dot"></span>
+        <span>Cloud</span>
+      </button>
       <div class="quick-stats" aria-label="Résumé">
         <div class="stat-pill"><span class="stat-value">${todayBookings.length}</span><span class="stat-label">Aujourd'hui</span></div>
         <div class="stat-pill"><span class="stat-value">${monthBookings.length}</span><span class="stat-label">Ce mois</span></div>
         <div class="stat-pill"><span class="stat-value">${formatMoney(due)}</span><span class="stat-label">Reste à payer</span></div>
-        ${state.currentUser ? `<button class="stat-pill signout-btn" data-signout><span class="stat-value">Cloud</span><span class="stat-label">Déconnexion</span></button>` : ""}
       </div>
     </header>
   `;
@@ -1175,12 +1179,25 @@ function bindEvents() {
     });
   }
 
-  document.querySelector("[data-signout]")?.addEventListener("click", async () => {
-    if (!supabaseClient) return;
-    await supabaseClient.auth.signOut();
-    state.currentUser = null;
-    state.bookings = loadBookings();
-    state.syncStatus = "Déconnecté";
+  document.querySelector("[data-cloud-toggle]")?.addEventListener("click", async () => {
+    if (!supabaseClient) {
+      state.syncStatus = "Cloud non configuré";
+      render();
+      return;
+    }
+
+    if (state.currentUser) {
+      if (!confirm("Se déconnecter du cloud ?")) return;
+      await supabaseClient.auth.signOut();
+      state.currentUser = null;
+      state.bookings = loadBookings();
+      state.syncStatus = "Déconnecté";
+      render();
+      return;
+    }
+
+    state.authLoading = false;
+    state.syncStatus = "Connecte-toi pour activer le cloud";
     render();
   });
 
