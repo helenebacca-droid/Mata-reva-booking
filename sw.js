@@ -1,4 +1,4 @@
-const CACHE_NAME = "mata-reva-booking-v17";
+const CACHE_NAME = "mata-reva-booking-v18";
 const ASSETS = [
   "./",
   "./index.html",
