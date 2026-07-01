@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Mata Reva Teahupo'o">
+  <rect width="512" height="512" rx="104" fill="#051923"/>
+  <path d="M70 330c47 42 101 59 162 50 56-8 87-41 139-37 28 2 51 14 71 36-12 35-45 63-88 71H158c-48 0-88-40-88-88v-32Z" fill="#18c7c3"/>
+  <path d="M66 301c49-60 105-85 166-75 38 6 66 24 92 41 40 26 75 49 128 15-20 47-54 76-103 86-44 9-84-5-124-19-50-17-100-35-159-48Z" fill="#f4fbfb"/>
+  <path d="M128 230c55-106 132-154 231-144 23 3 44 9 64 18-67 6-116 30-145 73-20 30-25 62-28 92-34-24-73-40-122-39Z" fill="#0e8aa0"/>
+  <path d="M146 274c51 2 85 18 119 34 37 18 73 35 129 28-64 44-128 46-192 8-26-16-46-38-56-70Z" fill="#ffcf5a"/>
+  <text x="256" y="152" text-anchor="middle" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="800" letter-spacing="0">MATA</text>
+  <text x="256" y="198" text-anchor="middle" fill="#ffcf5a" font-family="Arial, Helvetica, sans-serif" font-size="48" font-weight="800" letter-spacing="0">REVA</text>
+  <text x="256" y="415" text-anchor="middle" fill="#051923" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" letter-spacing="0">TEAHUPO'O</text>
+</svg>
