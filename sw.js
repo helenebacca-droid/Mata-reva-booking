@@ -1,14 +1,14 @@
-const CACHE_NAME = "mata-reva-booking-v22";
+const CACHE_NAME = "mata-reva-booking-v24";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=22",
+  "./styles.css?v=24",
   "./supabase-config.js",
-  "./app.js?v=22",
-  "./manifest.webmanifest",
-  "./assets/logo-mata.jpg",
-  "./assets/logo-192.png",
-  "./assets/logo-512.png",
+  "./app.js?v=24",
+  "./manifest.webmanifest?v=24",
+  "./assets/logo-mata.jpg?v=24",
+  "./assets/logo-192.png?v=24",
+  "./assets/logo-512.png?v=24",
   "./assets/tarif-mata-reva.jpg"
 ];
 

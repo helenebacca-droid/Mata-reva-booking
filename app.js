@@ -645,7 +645,7 @@ function renderTopbar() {
   return `
     <header class="topbar">
       <div class="brand">
-        <img class="brand-logo" src="./assets/logo-mata.jpg" alt="Logo Mata Reva" />
+        <img class="brand-logo" src="./assets/logo-mata.jpg?v=24" alt="Logo Mata Reva" />
         <div>
           <h1 class="brand-title">Mata Reva Booking</h1>
           <p class="brand-subtitle">${COMPANY.departure}</p>
@@ -697,7 +697,7 @@ function renderAuthPanel(message = "") {
   return `
     <section class="auth-wrap">
       <form class="panel auth-card" id="authForm">
-        <img class="auth-logo" src="./assets/logo-mata.jpg" alt="Logo Mata Reva" />
+        <img class="auth-logo" src="./assets/logo-mata.jpg?v=24" alt="Logo Mata Reva" />
         <div>
           <p class="eyebrow">Cloud partagé</p>
           <h2>Connexion Mata Reva</h2>
