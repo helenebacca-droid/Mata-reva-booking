@@ -1,0 +1,23 @@
+{
+  "appId": "com.matareva.booking",
+  "appName": "Mata Reva Booking",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "copy": {
+    "ignore": [
+      "android/**",
+      "node_modules/**",
+      ".git/**",
+      ".agents/**",
+      ".codex/**",
+      "*.sql",
+      "MISE_EN_LIGNE.md",
+      "package.json",
+      "pnpm-lock.yaml",
+      "capacitor.config.json"
+    ]
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

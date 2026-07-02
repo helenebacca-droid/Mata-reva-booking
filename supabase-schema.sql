@@ -18,10 +18,18 @@ create table if not exists public.bookings (
   tepari_out boolean default true,
   tepari_back boolean default true,
   waiver boolean default false,
+  google_event_id text,
+  google_synced_at timestamptz,
+  google_sync_error text,
   created_by uuid references auth.users(id),
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
+
+alter table public.bookings
+add column if not exists google_event_id text,
+add column if not exists google_synced_at timestamptz,
+add column if not exists google_sync_error text;
 
 alter table public.bookings enable row level security;
 

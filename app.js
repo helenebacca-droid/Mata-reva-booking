@@ -231,6 +231,9 @@ function rowToBooking(row) {
     tepariOut: row.tepari_out !== false,
     tepariBack: row.tepari_back !== false,
     waiver: Boolean(row.waiver),
+    googleEventId: row.google_event_id || null,
+    googleSyncedAt: row.google_synced_at || null,
+    googleSyncError: row.google_sync_error || "",
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -253,6 +256,7 @@ function bookingToRow(booking) {
     tepari_out: Boolean(booking.tepariOut),
     tepari_back: Boolean(booking.tepariBack),
     waiver: Boolean(booking.waiver),
+    google_event_id: booking.googleEventId || null,
     created_by: state.currentUser?.id || null
   };
 }
@@ -373,15 +377,22 @@ async function saveBookingRecord(booking) {
     return { ok: false, error };
   }
 
+  await syncGoogleCalendar("upsert", booking);
   saveBookings();
-  state.syncStatus = "Cloud synchronisé";
+  state.syncStatus = booking.googleSyncError ? `Cloud OK, calendrier à vérifier : ${booking.googleSyncError}` : "Cloud synchronisé";
   return { ok: true };
 }
 
-async function deleteBookingRecord(id) {
+async function deleteBookingRecord(bookingOrId) {
+  const booking = typeof bookingOrId === "object" ? bookingOrId : state.bookings.find((item) => item.id === bookingOrId);
+  const id = typeof bookingOrId === "object" ? bookingOrId.id : bookingOrId;
   if (!isCloudActive()) {
     saveBookings();
     return { ok: true };
+  }
+
+  if (booking?.googleEventId) {
+    await syncGoogleCalendar("delete", booking);
   }
 
   const { error } = await supabaseClient.from("bookings").delete().eq("id", id);
@@ -394,6 +405,72 @@ async function deleteBookingRecord(id) {
   saveBookings();
   state.syncStatus = "Cloud synchronisé";
   return { ok: true };
+}
+
+function googleCalendarPayload(booking) {
+  return {
+    id: booking.id,
+    client: booking.client,
+    phone: booking.phone,
+    serviceId: booking.serviceId,
+    serviceName: serviceById(booking.serviceId).name,
+    date: booking.date,
+    time: booking.time,
+    duration: durationFor(booking),
+    adults: Number(booking.adults || 0),
+    children: Number(booking.children || 0),
+    status: booking.status,
+    paid: Number(booking.paid || 0),
+    total: calculateTotal(booking),
+    notes: booking.notes,
+    tepariOut: Boolean(booking.tepariOut),
+    tepariBack: Boolean(booking.tepariBack),
+    waiver: Boolean(booking.waiver),
+    googleEventId: booking.googleEventId || null
+  };
+}
+
+async function syncGoogleCalendar(action, booking) {
+  if (!isCloudActive()) return { ok: false };
+
+  try {
+    const { data, error } = await supabaseClient.functions.invoke("sync-google-calendar", {
+      body: {
+        action,
+        booking: googleCalendarPayload(booking)
+      }
+    });
+
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+
+    if (action === "upsert" && data?.googleEventId) {
+      booking.googleEventId = data.googleEventId;
+      booking.googleSyncedAt = data.googleSyncedAt || new Date().toISOString();
+      booking.googleSyncError = "";
+      await supabaseClient
+        .from("bookings")
+        .update({
+          google_event_id: booking.googleEventId,
+          google_synced_at: booking.googleSyncedAt,
+          google_sync_error: null
+        })
+        .eq("id", booking.id);
+    }
+
+    return { ok: true };
+  } catch (error) {
+    const message = error?.message || String(error);
+    booking.googleSyncError = message;
+    if (action === "upsert") {
+      await supabaseClient
+        .from("bookings")
+        .update({ google_sync_error: message })
+        .eq("id", booking.id);
+    }
+    state.syncStatus = `Calendrier non synchronisé : ${message}`;
+    return { ok: false, error };
+  }
 }
 
 function loadPrices() {
@@ -1310,7 +1387,7 @@ function bindEvents() {
       const booking = state.bookings.find((item) => item.id === button.dataset.delete);
       if (!booking || !confirm(`Supprimer la réservation de ${booking.client || "ce client"} ?`)) return;
       state.bookings = state.bookings.filter((item) => item.id !== booking.id);
-      await deleteBookingRecord(booking.id);
+      await deleteBookingRecord(booking);
       state.editingId = null;
       state.draft = null;
       state.detailId = null;
